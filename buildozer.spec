@@ -5,7 +5,7 @@ package.domain = org.test
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas
 version = 0.1
-requirements = python3,kivy,kivymd,requests,urllib3,chardet,idna
+requirements = python3,kivy==2.2.1,kivymd==1.1.1,requests,urllib3,chardet,idna,openssl
 orientation = portrait
 osx.kivy_version = 2.0.0
 fullscreen = 0
