@@ -1,4 +1,4 @@
- name: Build Android APK
+name: Build Android APK
 
 on:
   push:
@@ -13,7 +13,7 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Java
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
@@ -30,20 +30,13 @@ jobs:
           sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev
           pip install --upgrade buildozer cython
 
-      - name: Accept Licenses for Buildozer SDK Path
+      - name: Build APK
         run: |
-          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
-          printf "243337023b30a17d176a37d22e03884144365778\n89330172877f408753801101822d1049e6328ebb\nd56f5187479451eabf01fb78af6dfcb131a6481e" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
-          printf "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
-          
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
+          yes | buildozer -v android debug || buildozer -v android debug
 
-      - name: Build APK with Buildozer
-        run: |
-          buildozer -v android debug
-
-      - name: Upload APK Artifact
+      - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: app-debug-apk
