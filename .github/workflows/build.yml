@@ -30,11 +30,12 @@ jobs:
           sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev cmake gettext libltdl-dev
           pip install --upgrade buildozer cython
 
-      - name: Build APK
+      - name: Build APK with Auto License Acceptance
         run: |
           mkdir -p ~/.android
           touch ~/.android/repositories.cfg
-          buildozer -v android debug
+          export BUILDOZER_ACCEPT_INDIVIDUAL_LICENSES=1
+          yes | buildozer -v android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
