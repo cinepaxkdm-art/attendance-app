@@ -25,6 +25,8 @@ jobs:
           pip install --upgrade buildozer cython
 
       - name: Build APK with Buildozer
+        env:
+          ACCEPT_SDK_LICENSES: 1
         run: |
           buildozer -v android debug
 
