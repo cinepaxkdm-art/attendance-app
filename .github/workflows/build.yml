@@ -1,4 +1,4 @@
-name: Build Android APK
+ name: Build Android APK
 
 on:
   push:
@@ -19,9 +19,6 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -33,9 +30,14 @@ jobs:
           sudo apt-get install -y git zip unzip python3-pip autoconf libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libffi-dev libssl-dev
           pip install --upgrade buildozer cython
 
-      - name: Accept All Android Licenses
+      - name: Accept Licenses for Buildozer SDK Path
         run: |
-          yes | sdkmanager --licenses || true
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          printf "243337023b30a17d176a37d22e03884144365778\n89330172877f408753801101822d1049e6328ebb\nd56f5187479451eabf01fb78af6dfcb131a6481e" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          printf "84831b9409646a918e30573bab4c9c91346d8abd" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-preview-license
+          
+          mkdir -p ~/.android
+          touch ~/.android/repositories.cfg
 
       - name: Build APK with Buildozer
         run: |
