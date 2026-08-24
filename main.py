@@ -34,12 +34,8 @@ SCOPE = [
 
 @st.cache_resource
 def init_connection():
-    import glob
-    json_files = glob.glob("*.json")
-    if not json_files:
-        st.error("❌ Credentials JSON file nahi mili GitHub par!")
-        return None
-    creds_file = json_files[0]
+    # Direct aapki upload ki hui file ka naam yahan likh diya hai
+    creds_file = "mos-attendance-e4eb455f193c.json"
     creds = Credentials.from_service_account_file(creds_file, scopes=SCOPE)
     client = gspread.authorize(creds)
     return client
@@ -76,13 +72,11 @@ with st.form("attendance_form"):
 if submit:
     if client:
         try:
-            # Your Google Sheet URL
             sheet_url = "https://docs.google.com/spreadsheets/d/1p5PDnpFaS2hUpDnW6lLAvXaDYMrzJVIuDZ2i8xoP49A/edit?usp=drivesdk"
             sheet = client.open_by_url(sheet_url).sheet1
             
             timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             
-            # Sending data row by row to Google Sheet
             rows_added = 0
             for emp, status in updated_status.items():
                 sheet.append_row([date_str, emp, status, timestamp])
