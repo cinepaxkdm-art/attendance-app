@@ -2,13 +2,13 @@ import streamlit as st
 import pandas as pd
 from datetime import datetime
 import gspread
-from oauth2client.service_account import ServiceAccountCredentials
+from google.oauth2.service_account import Credentials
 
-st.set_page_config(page_title="Cinepax Attendance & Roster", layout="wide")
+st.set_page_config(page_title="Cinepax Attendance & Roster Sync", layout="wide")
 
 st.title("🎬 Cinepax Attendance & Duty Roster Sync")
 
-# Employees List from Master
+# Employees List
 EMPLOYEES = [
     "Syed Tayyab Shah",
     "Akash Ilyas",
@@ -26,13 +26,33 @@ EMPLOYEES = [
     "Khalil Ahmed"
 ]
 
-# 1. Date Selector
+# Google Sheets Scope Setup
+SCOPE = [
+    "https://spreadsheets.google.com/feeds",
+    "https://www.googleapis.com/auth/drive"
+]
+
+@st.cache_resource
+def init_connection():
+    import glob
+    json_files = glob.glob("*.json")
+    if not json_files:
+        st.error("❌ Credentials JSON file nahi mili GitHub par!")
+        return None
+    creds_file = json_files[0]
+    creds = Credentials.from_service_account_file(creds_file, scopes=SCOPE)
+    client = gspread.authorize(creds)
+    return client
+
+client = init_connection()
+
+# Date Selector
 selected_date = st.date_input("Select Attendance Date", datetime.today())
 date_str = selected_date.strftime("%Y-%m-%d")
 
 st.subheader(f"Attendance Sheet for: {selected_date.strftime('%d-%b-%Y')}")
 
-# Form for Bulk Entry
+# Attendance Form
 with st.form("attendance_form"):
     cols = st.columns([2, 2])
     cols[0].write("**Employee Name**")
@@ -54,38 +74,23 @@ with st.form("attendance_form"):
     submit = st.form_submit_button("🚀 Sync All to Google Sheet")
 
 if submit:
-    try:
-        # Connecting to Google Sheets using Streamlit Secrets or public fallback
-        # (Make sure your Google Sheet is shared with edit access)
-        sheet_url = "https://docs.google.com/spreadsheets/d/1p5PDnpFaS2hUpDnW6lLAvXaDYMrzJVIuDZ2i8xoP49A/edit?usp=drivesdk"
-        
-        # We will use pandas to preview and confirmation
-        records = []
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        for emp, status in updated_status.items():
-            records.append({
-                "Date": date_str,
-                "Employee Name": emp,
-                "Status": status,
-                "Synced At": timestamp
-            })
-        
-        new_df = pd.DataFrame(records)
-        st.success(f"✅ Attendance prepared for sync for {date_str}!")
-        st.dataframe(new_df, use_container_width=True)
-        
-        # CSV download backup as well so data is never lost
-        st.download_button(
-            label="📥 Download This Attendance (CSV)",
-            data=new_df.to_csv(index=False),
-            file_name=f"attendance_{date_str}.csv",
-            mime="text/csv"
-        )
-        
-    except Exception as e:
-        st.error(f"Error connecting to sheet: {e}")
-
-# View Saved Records
-st.divider()
-st.subheader("📋 Status Summary")
-st.info("Aap mobile se yahan attendance submit karenge, aur yeh foran record ho jayegi!")
+    if client:
+        try:
+            # Your Google Sheet URL
+            sheet_url = "https://docs.google.com/spreadsheets/d/1p5PDnpFaS2hUpDnW6lLAvXaDYMrzJVIuDZ2i8xoP49A/edit?usp=drivesdk"
+            sheet = client.open_by_url(sheet_url).sheet1
+            
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            
+            # Sending data row by row to Google Sheet
+            rows_added = 0
+            for emp, status in updated_status.items():
+                sheet.append_row([date_str, emp, status, timestamp])
+                rows_added += 1
+                
+            st.success(f"✅ Kamyaabi se {rows_added} employees ki attendance Google Sheet par sync ho gayi hai!")
+            
+        except Exception as e:
+            st.error(f"Error syncing with Google Sheet: {e}")
+    else:
+        st.error("Google Sheets connection initialize nahi ho saka.")
